@@ -1,6 +1,6 @@
 # Zuck
 
-###WIP
+:warning: **WIP** :warning:
 
 ## Installation
 
