@@ -1,6 +1,6 @@
 # Zuck
 
-**TODO: Add description**
+###WIP
 
 ## Installation
 
@@ -11,6 +11,15 @@ by adding `zuck` to your list of dependencies in `mix.exs`:
 def deps do
   [{:zuck, "~> 0.1.0"}]
 end
+```
+
+## Usage
+
+```elixir
+{:ok, user} = Zuck.get("/me", %{
+  access_token: "TOKEN",
+  fields: "name,email"
+})
 ```
 
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
