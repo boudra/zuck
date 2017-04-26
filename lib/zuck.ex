@@ -9,14 +9,13 @@ defmodule Zuck do
   end
 
   def post(path, params \\ %{}, opts \\ []) do
-    params = params
+    body = params
              |> Enum.map(fn
-               ({k,v}) when is_map(v) ->
-                 {k, Poison.encode!(v)}
+               ({k,v}) when is_map(v) -> {k, Poison.encode!(v)}
                (v) -> v
              end)
 
-    request(:post, path, %{}, {:form, params}, opts)
+    request(:post, path, %{}, {:form, body}, opts)
   end
 
   def request(method, path, params, body, opts) do
@@ -28,7 +27,7 @@ defmodule Zuck do
     qs = params
          |> Map.to_list
 
-    Logger.log(:info, "[zuck] #{path} #{inspect params} #{inspect body}")
+    Logger.log(:info, "[zuck] #{method} #{String.trim_trailing(path, "/")} #{inspect params}")
 
     url = :hackney_url.make_url(@endpoint, path, qs)
 
