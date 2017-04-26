@@ -11,7 +11,10 @@ defmodule Zuck do
   def post(path, params \\ %{}, opts \\ []) do
     body = params
              |> Enum.map(fn
-               ({k,v}) when is_map(v) -> {k, Poison.encode!(v)}
+               ({k,v}) when is_map(v) -> case Poison.encode(v) do
+                 {:ok, v} -> {k, v}
+                 _ -> {k, v}
+               end
                (v) -> v
              end)
 
