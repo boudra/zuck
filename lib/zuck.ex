@@ -1,47 +1,83 @@
 defmodule Zuck do
 
-  alias Zuck.Config
+  alias Zuck.{Config, Request}
 
   require Logger
 
+  def get!(path, params \\ %{}, opts \\ []) do
+    case get(path, params, opts) do
+      {:ok, res} -> res
+      {:error, err} -> raise err
+    end
+  end
+
   def get(path, params \\ %{}, opts \\ []) do
-    request(:get, path, params, "", opts)
+    Request.new(:get, path, params, opts)
+    |> call
+  end
+
+  def get_stream(path, params \\ %{}, opts \\ []) do
+    Request.new(:get, path, params, opts)
+    |> stream
   end
 
   def post(path, params \\ %{}, opts \\ []) do
-    body = params
-             |> Enum.map(fn
-               ({k,v}) when is_map(v) -> case Poison.encode(v) do
-                 {:ok, v} -> {k, v}
-                 _ -> {k, v}
-               end
-               (v) -> v
-             end)
-
-    request(:post, path, %{}, body, opts)
+    Request.new(:post, path, params, opts)
+    |> call
   end
 
-  def request(method, path, params, body, opts) do
+  def post_stream(path, params \\ %{}, opts \\ []) do
+    Request.new(:get, path, params, opts)
+    |> stream
+  end
+
+  def stream(%Request{} = req) do
+    Stream.resource(fn -> 
+      {:ok, res} = call(req)
+      get_in(res, [:paging, :cursors, :after])
+    end, fn
+      nil -> {:halt, nil}
+      cursor ->
+      next_req = Request.put_params(req, %{ after: cursor })
+      {:ok, res} = call(next_req)
+      case get_in(res, [:paging, :cursors, :after]) do
+        nil -> {:halt, nil}
+        cursor -> {res.data, cursor}
+      end
+    end, fn cursor -> end)
+  end
+
+  def call(%Request{} = req) do
+    debug = Keyword.get(req.opts, :debug, Config.debug?)
+    app_id = Keyword.get(req.opts, :app_id, Config.app_id)
+    app_secret = Keyword.get(req.opts, :app_secret, Config.app_secret)
+
+    params = 
+      case debug do
+        true -> Map.put(req.params, :debug, true)
+        false -> req.params
+      end
+      |> Map.put(:app_id, app_id)
+      |> Map.put(:app_secret, app_secret)
+      |> Map.put(:method, req.method |> Atom.to_string |> String.upcase)
+
+
+    req = %Request{ req | params: params}
+
+    if Config.log? do
+      Logger.log(:info, "[zuck] #{req.method} #{String.trim_trailing(req.path, "/")} #{inspect req.params}")
+    end
+
+    body = Request.body(req)
+    qs = Request.query_string(req)
+
+    url = :hackney_url.make_url(Config.endpoint <> req.version, req.path, qs)
 
     headers = [
       {"Accept", "application/json"}
     ]
 
-    debug = Keyword.get(opts, :debug, Config.debug?)
-
-    qs = case debug do
-          true -> Map.put(params, :debug, true)
-          false -> params
-         end
-         |> Map.to_list
-
-    if Config.log? do
-      Logger.log(:info, "[zuck] #{method} #{String.trim_trailing(path, "/")} #{inspect params}")
-    end
-
-    url = :hackney_url.make_url(Config.endpoint, path, qs)
-
-    with {:ok, status, _headers, body_ref} <- :hackney.request(method, url, headers, {:form, body}, opts),
+    with {:ok, status, _headers, body_ref} <- :hackney.request(:post, url, headers, {:form, body}, req.http_opts),
          {:ok, body} <- :hackney.body(body_ref),
          {:ok, parsed_body} <- Poison.decode(body, keys: :atoms) do
 
@@ -51,7 +87,6 @@ defmodule Zuck do
       end
 
     end
-
   end
 
 end
