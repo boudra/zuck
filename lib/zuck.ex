@@ -1,6 +1,6 @@
 defmodule Zuck do
 
-  @endpoint "https://graph.facebook.com/v2.9"
+  alias Zuck.Config
 
   require Logger
 
@@ -18,7 +18,7 @@ defmodule Zuck do
                (v) -> v
              end)
 
-    request(:post, path, %{}, {:form, body}, opts)
+    request(:post, path, %{}, body, opts)
   end
 
   def request(method, path, params, body, opts) do
@@ -27,14 +27,21 @@ defmodule Zuck do
       {"Accept", "application/json"}
     ]
 
-    qs = params
+    debug = Keyword.get(opts, :debug, Config.debug?)
+
+    qs = case debug do
+          true -> Map.put(params, :debug, true)
+          false -> params
+         end
          |> Map.to_list
 
-    Logger.log(:info, "[zuck] #{method} #{String.trim_trailing(path, "/")} #{inspect params}")
+    if Config.log? do
+      Logger.log(:info, "[zuck] #{method} #{String.trim_trailing(path, "/")} #{inspect params}")
+    end
 
-    url = :hackney_url.make_url(@endpoint, path, qs)
+    url = :hackney_url.make_url(Config.endpoint, path, qs)
 
-    with {:ok, status, _headers, body_ref} <- :hackney.request(method, url, headers, body, opts),
+    with {:ok, status, _headers, body_ref} <- :hackney.request(method, url, headers, {:form, body}, opts),
          {:ok, body} <- :hackney.body(body_ref),
          {:ok, parsed_body} <- Poison.decode(body, keys: :atoms) do
 
