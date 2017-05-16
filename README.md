@@ -50,6 +50,12 @@ Zuck.get_stream("/act_ACCOUNT_ID/insights", %{
 |> Enum.map(fn ad -> ad.ad_name end)
 ```
 
+## Roadmap
+
+[ ] Batch requests
+[ ] Real time updates
+[ ] Facebook messenger
+
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/zuck](https://hexdocs.pm/zuck).
