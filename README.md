@@ -1,15 +1,13 @@
 # Zuck
 
-:warning: **WIP** :warning:
-
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
+The package can be installed
 by adding `zuck` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
-  [{:zuck, "~> 0.1.0"}]
+  [{:zuck, git: "https://github.com/boudra/zuck.git"}}]
 end
 ```
 
