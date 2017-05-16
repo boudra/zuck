@@ -40,7 +40,7 @@ config :zuck,
 
 ### Pagination trough streams
 
-You can use the stream helpers to handle multipage data, very useful when getting ad insights or large lists of data:
+You can use the stream helpers to handle multipage data, very useful when getting ad insights or large lists of data, the stream will handle the cursor and make the necesary requests for you:
 
 ```elixir
 Zuck.get_stream("/act_ACCOUNT_ID/insights", %{
