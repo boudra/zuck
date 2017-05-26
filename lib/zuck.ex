@@ -32,19 +32,15 @@ defmodule Zuck do
   end
 
   def stream(%Request{} = req) do
-    Stream.resource(fn -> 
-      {:ok, res} = call(req)
-      get_in(res, [:paging, :cursors, :after])
-    end, fn
-      nil -> {:halt, nil}
-      cursor ->
-      next_req = Request.put_params(req, %{ after: cursor })
-      {:ok, res} = call(next_req)
-      case get_in(res, [:paging, :cursors, :after]) do
-        nil -> {:halt, nil}
-        cursor -> {res.data, cursor}
-      end
-    end, fn cursor -> end)
+    Stream.resource(fn -> "" end,
+      fn
+        nil ->
+          {:halt, nil}
+        cursor ->
+          next_req = Request.put_params(req, %{ after: cursor })
+          {:ok, res} = call(next_req)
+          {res.data, get_in(res, [:paging, :cursors, :after])}
+      end, fn cursor -> end)
   end
 
   def call(%Request{} = req) do
@@ -52,7 +48,7 @@ defmodule Zuck do
     app_id = Keyword.get(req.opts, :app_id, Config.app_id)
     app_secret = Keyword.get(req.opts, :app_secret, Config.app_secret)
 
-    params = 
+    params =
       case debug do
         true -> Map.put(req.params, :debug, true)
         false -> req.params
