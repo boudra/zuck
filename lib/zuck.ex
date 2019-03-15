@@ -40,7 +40,7 @@ defmodule Zuck do
           next_req = Request.put_params(req, %{ after: cursor })
           {:ok, res} = call(next_req)
           {res.data, get_in(res, [:paging, :cursors, :after])}
-      end, fn cursor -> end)
+      end, fn _ -> true end)
   end
 
   def call(%Request{} = req) do
