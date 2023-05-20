@@ -49,7 +49,7 @@ defmodule Zuck.Request do
     Enum.flat_map(req.params, &encode_param/1)
   end
 
-  def body(%Request{method: :get} = req) do
+  def body(%Request{method: :get}) do
     []
   end
   def body(%Request{} = req) do
@@ -59,7 +59,7 @@ defmodule Zuck.Request do
   def query_string(%Request{method: :get} = req) do
     encode_params(req)
   end
-  def query_string(%Request{} = req) do
+  def query_string(%Request{}) do
     []
   end
 
